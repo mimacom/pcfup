@@ -1,0 +1,392 @@
+#!/bin/bash
+
+getopt --test > /dev/null
+if [[ $? -ne 4 ]]; then
+    echo "[ERR] I’m sorry, `getopt --test` failed in this environment."
+    exit 1
+fi
+
+OPTIONS=vd:t:u:k
+LONGOPTIONS=verbose,download-folder:,om-username:,om-password:,skip-ssl-validation,pivnet-token:,iaas:,offline,prepare-offline
+
+PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
+if [[ $? -ne 0 ]]; then
+    exit 2
+fi
+eval set -- "$PARSED"
+
+export DOWNLOAD_PATH_OM="https://github.com/pivotal-cf/om/releases/download/0.29.0/om-linux"
+export DOWNLOAD_PATH_PIVNET="https://github.com/pivotal-cf/pivnet-cli/releases/download/v0.0.49/pivnet-linux-amd64-0.0.49"
+export DOWNLOAD_PATH_JQ="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64"
+
+export DOWNLOADS_FOLDER="downloads"
+
+OM_ARGS=
+PIVNET_TOKEN=
+IAAS=
+export ENABLE_VERBOSE=0
+
+while true; do
+  case "$1" in
+    -v|--verbose)
+      ENABLE_VERBOSE=1
+      shift
+      ;;
+    -d|--download-folder)
+      DOWNLOADS_FOLDER="$2"
+      shift 2
+      ;;
+    -t|--om-target)
+      OM_TARGET="$2"
+      shift 2
+      ;;
+    -u|--om-username)
+      OM_USERNAME="$2"
+      shift 2
+      ;;
+    --om-password)
+      OM_PASSWORD="$2"
+      shift 2
+      ;;
+    -k|--skip-ssl-validation)
+      OM_ARGS="$OM_ARGS -k"
+      shift 2
+      ;;
+    --pivnet-token)
+      PIVNET_TOKEN="$2"
+      shift 2
+      ;;
+    --iaas)
+      IAAS="$2"
+      shift 2
+      ;;
+    --offline)
+      ;;
+    --prepare-offline)
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Programming error"
+      exit 3
+      ;;
+  esac
+done
+
+
+set -eu
+
+###########################################################
+# log methods
+###########################################################
+
+function logDebug() {
+  if [[ $ENABLE_VERBOSE -eq 1 ]]; then
+    echo "[DEBUG] $@"
+  fi
+}
+
+function logInfo() {
+  echo "[INFO] $@"
+}
+
+function logError() {
+  echo "[ERR] $@"
+}
+
+###########################################################
+# generic methods
+###########################################################
+
+NUMBER_OF_ARGUMENTS=$#
+function assertNumberOfArguments() {
+  if [[ $NUMBER_OF_ARGUMENTS -ne $1 ]]; then
+    logError "Usage: $2"
+    exit 1
+  fi
+}
+
+function assertOmAvailable() {
+  type om 2>>/dev/null >>/dev/null || (logError "failed to find om, please use 'pcfup download-tools' or install om manually." ; exit 10)
+}
+
+function assertOmSignedIn() {
+  # TODO: Check if OM config is present and signed in
+  logDebug "Verification of om login not available yet"
+}
+
+function assertPivnetAvailable() {
+  type pivnet 2>>/dev/null >>/dev/null || (logError "failed to find pivnet, please use 'pcfup download-tools' or install pivnet manually." ; exit 10)
+}
+
+function assertPivnetSignedIn() {
+  # TODO: Check if pivnet config is present and signed in
+  logDebug "Verification of pivnet login not available yet"
+}
+
+function assertJqAvailable() {
+  type jq 2>>/dev/null >>/dev/null || (logError "failed to find jq, please use 'pcfup download-tools' or install jq manually." ; exit 10)
+}
+
+function execPivnet() {
+  logDebug "execute pivnet $@"
+  pivnet $@
+}
+
+function execOM() {
+  logDebug "execute om $@"
+  om -t $OM_TARGET --username=$OM_USERNAME --password=$OM_PASSWORD --skip-ssl-validation $@
+}
+
+
+###########################################################
+# command: help
+###########################################################
+
+function commandHelp() {
+  echo " 
+Usage: pcfup [parameters] <command> [args...]
+
+Parameters:
+--version
+-v|--verbose
+-d|--download-folder
+-t|--om-target
+-u|--om-username
+--om-password
+-k|--skip-ssl-validation
+--pivnet-token
+--iaas
+  vsphere
+--offline
+--prepare-offline
+
+Commands:
+pcfup help
+pcfup product <product> <version>
+pcfup stemcell <stemcell>
+pcfup download-tools
+pcfup installed-products
+pcfup available-product-versions
+pcfup outdated
+pcfup cleanup-downloads
+pcfup cleanup-om
+pcfup version
+"
+}
+
+###########################################################
+# command: product
+###########################################################
+
+function commandProduct() {
+  assertPivnetAvailable
+  assertOmAvailable
+  assertPivnetSignedIn
+  assertOmSignedIn
+  assertNumberOfArguments 3 "pcfup product <product> <version>"
+
+  PRODUCT=$2
+  VERSION=$3
+  PRODUCT_DOWNLOAD_FOLDER=$DOWNLOADS_FOLDER/$PRODUCT/$VERSION
+
+  mkdir -p $PRODUCT_DOWNLOAD_FOLDER
+  if [[ $(ls -1 $PRODUCT_DOWNLOAD_FOLDER/$PRODUCT*.pivotal || echo "1") == "1" ]]; then
+    logInfo "download $PRODUCT ($VERSION) from pivnet..."
+    execPivnet download-product-files -p $PRODUCT -r $VERSION -d $PRODUCT_DOWNLOAD_FOLDER --glob=*.pivotal --accept-eula
+  else
+    logInfo "use cached version from $PRODUCT_DOWNLOAD_FOLDER"
+  fi
+  
+  PRODUCT_FILE=$(ls -1 $PRODUCT_DOWNLOAD_FOLDER/$PRODUCT*.pivotal | head -1)
+  logDebug "parse $PRODUCT_FILE to determine the necessary stemcell version."
+  
+  PRODUCT_METADATA=$(mktemp)
+  unzip -p $PRODUCT_FILE 'metadata/*' > $PRODUCT_METADATA
+  
+  STEMCELL_VERSION=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["stemcell_criteria"]["version"]')
+  PRODUCT_NAME=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["name"]')
+  rm $PRODUCT_METADATA
+  logInfo "detected $STEMCELL_VERSION in product, ensure that this version is available."
+
+  if [ -n "$STEMCELL_VERSION" ]; then
+    ensureStemcellIsAvailable $STEMCELL_VERSION
+  fi
+  
+  logInfo "upload product $PRODUCT to OpsManager."
+  execOM upload-product --product $PRODUCT_FILE
+  
+  logInfo "stage product $PRODUCT."
+  execOM stage-product -p $PRODUCT_NAME -v $VERSION
+}
+
+
+###########################################################
+# command: stemcell
+###########################################################
+
+function ensureStemcellIsAvailable() {
+  STEMCELL_VERSION=$1
+  diagnostic_report=$(
+    execOM curl --silent --path "/api/v0/diagnostic_report"
+  )
+ 
+  stemcell=$(
+    echo $diagnostic_report |
+    jq \
+      --arg version "$STEMCELL_VERSION" \
+      --arg glob "$IAAS" \
+    '.stemcells[] | select(contains($version) and contains($glob))'
+  )
+ 
+  if [[ -z "$stemcell" ]]; then
+    downloadStemcell $STEMCELL_VERSION
+    SC_FILE_PATH=$(ls -1 $DOWNLOADS_FOLDER/bosh-stemcell*$STEMCELL_VERSION*$IAAS*.tgz | head -1)
+   
+    if [ ! -f "$SC_FILE_PATH" ]; then
+      logError "stemcell file not found!"
+      exit 1
+    fi
+   
+    logInfo "upload $STEMCELL_VERSION to OpsManager"
+    execOM upload-stemcell -s $SC_FILE_PATH
+  fi
+}
+
+function downloadStemcell() {
+  STEMCELL_VERSION=$1
+  logInfo "download stemcell $STEMCELL_VERSION"
+  
+  product_slug="stemcells"
+  SC_FILE_PATH=$(ls -1 $DOWNLOADS_FOLDER/bosh-stemcell*$STEMCELL_VERSION*$IAAS*.tgz | head -1 2>> /dev/null)
+  logDebug "path to stemcell: $SC_FILE_PATH--"
+  if [[ "$SC_FILE_PATH" == "" ]]; then
+    execPivnet download-product-files -p "$product_slug" -r $STEMCELL_VERSION -g "*${IAAS}*" --accept-eula -d $DOWNLOADS_FOLDER/
+  fi
+}
+
+
+###########################################################
+# command: download-tools
+###########################################################
+
+function commandDownloadTools() {
+  mkdir -p ~/bin
+
+  set +e
+  type om 2>> /dev/null >> /dev/null
+  if [[ $? -eq 1 ]]; then
+    logInfo "download om tool to ~/bin/om"
+    wget -O$HOME/bin/om $DOWNLOAD_PATH_OM
+    chmod +x ~/bin/om
+  else
+    logDebug "do not need to download om, it's already there"
+  fi
+
+  type pivnet 2>> /dev/null >> /dev/null
+  if [[ $? -eq 1 ]]; then
+    logInfo "download pivnet to ~/bin/pivnet"
+    wget -O$HOME/bin/pivnet $DOWNLOAD_PATH_PIVNET
+    chmod +x ~/bin/pivnet
+  else
+    logDebug "do not need to download pivnet, it's already there"
+  fi
+
+  type jq 2>> /dev/null >> /dev/null
+  if [[ $? -eq 1 ]]; then
+    logInfo "download jq tool to ~/bin/jq"
+    wget -O$HOME/bin/jq $DOWNLOAD_PATH_JQ
+    chmod +x ~/bin/jq
+  else
+    logDebug "do not need to download jq, it's already there"
+  fi
+
+  logInfo "all tools are downloaded"
+  set -e
+}
+
+
+###########################################################
+# command: installed-products
+###########################################################
+
+function commandInstalledProducts() {
+  assertOmAvailable
+  assertOmSignedIn
+  assertNumberOfArguments 1 "pcfup installed-products"
+
+  execOM deployed-products
+}
+
+
+###########################################################
+# command: available-product-versions
+###########################################################
+
+function commandAvailableProductVersions() {
+  assertPivnetAvailable
+  assertPivnetSignedIn
+  assertNumberOfArguments 2 "pcfup available-product-versions <product>"
+
+  PRODUCT=$2
+  execPivnet releases -p $PRODUCT | less
+}
+
+
+###########################################################
+# parsing command parameters and arguments
+###########################################################
+
+export PATH=~/bin:$PATH
+
+if [[ "$PIVNET_TOKEN" != "" ]]; then
+  assertPivnetAvailable
+  pivnet login --api-token=$PIVNET_TOKEN
+fi
+
+
+if [[ $# -lt 1 ]]; then
+  COMMAND="help"
+else
+  COMMAND=$1
+fi
+
+case "$COMMAND" in
+  help)
+    commandHelp 
+    ;;
+  product)
+    commandProduct $@
+    ;;
+  stemcell)
+    logError "not implemented yet"
+    exit 10
+    ;;
+  download-tools)
+    commandDownloadTools $@
+    ;;
+  installed-products)
+    commandInstalledProducts $@
+    ;;
+  available-product-versions)
+    commandAvailableProductVersions $@
+    ;;
+  outdated)
+    logError "not implemented yet"
+    exit 10
+    ;;
+  cleanup-downloads)
+    logError "not implemented yet"
+    exit 10
+    ;;
+  cleanup-om)
+    logError "not implemented yet"
+    exit 10
+    ;;
+  write-config)
+    logError "not implemented yet"
+    exit 10
+    ;;
+esac
