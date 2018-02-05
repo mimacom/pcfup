@@ -22,7 +22,6 @@ export DOWNLOAD_PATH_JQ="https://github.com/stedolan/jq/releases/download/jq-1.5
 export DOWNLOADS_FOLDER="downloads"
 
 OM_ARGS=
-PIVNET_TOKEN=
 IAAS=
 export ENABLE_VERBOSE=0
 
