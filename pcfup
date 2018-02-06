@@ -181,6 +181,8 @@ pcfup stemcell <stemcell>
 pcfup download-tools
 pcfup installed-products
 pcfup available-product-versions
+pcfup export-installation <file>
+pcfup import-installation <file>
 pcfup outdated
 pcfup cleanup-downloads
 pcfup cleanup-om
@@ -347,6 +349,34 @@ function commandAvailableProductVersions() {
 
 
 ###########################################################
+# command: export-installation
+###########################################################
+
+function commandExportInstallation() {
+  assertOmAvailable
+  assertOmSignedIn
+  assertNumberOfArguments 2 "pcfup export-installation <filename>"
+
+  execOM export-installation -o $2
+}
+
+
+###########################################################
+# command: export-installation
+###########################################################
+
+function commandImportInstallation() {
+  assertOmAvailable
+  assertOmSignedIn
+  assertNumberOfArguments 2 "pcfup import-installation <filename>"
+
+  echo -n "Decryption passphrase (visible): "
+  read DECRYPTION_PASSPHRASE
+  execOM import-installation -i $2 -dp $DECRYPTION_PASSPHRASE
+}
+
+
+###########################################################
 # parsing command parameters and arguments
 ###########################################################
 
@@ -391,6 +421,12 @@ case "$COMMAND" in
   cleanup-om)
     logError "not implemented yet"
     exit 10
+    ;;
+  export-installation)
+    commandExportInstallation $@
+    ;;
+  import-installation)
+    commandImportInstallation $@
     ;;
   write-config)
     logError "not implemented yet"
