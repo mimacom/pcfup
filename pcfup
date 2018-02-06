@@ -242,6 +242,16 @@ function commandProduct() {
 # command: stemcell
 ###########################################################
 
+function commandStemcell() {
+  assertPivnetAvailable
+  assertOmAvailable
+  assertPivnetSignedIn
+  assertOmSignedIn
+  assertNumberOfArguments 2 "pcfup stemcell <version>"
+
+  ensureStemcellIsAvailable $2
+}
+
 function ensureStemcellIsAvailable() {
   STEMCELL_VERSION=$1
   diagnostic_report=$(
@@ -401,8 +411,7 @@ case "$COMMAND" in
     commandProduct $@
     ;;
   stemcell)
-    logError "not implemented yet"
-    exit 10
+    commandStemcell $@
     ;;
   download-tools)
     commandDownloadTools $@
