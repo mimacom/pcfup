@@ -139,6 +139,17 @@ function execOM() {
   om -t $OM_TARGET --username=$OM_USERNAME --password=$OM_PASSWORD --skip-ssl-validation $@
 }
 
+function loginToPivnetIfTokenIsAvailable() {
+  set +e
+  set +o nounset
+  type pivnet 2>> /dev/null >> /dev/null
+  if [[ $? -eq 0 && "$PIVNET_TOKEN" != "" ]]; then
+    logInfo "login to pivnet"
+    execPivnet login --api-token=$PIVNET_TOKEN
+  fi
+  set -e
+  set -o nounset
+}
 
 ###########################################################
 # command: help
@@ -340,17 +351,13 @@ function commandAvailableProductVersions() {
 
 export PATH=~/bin:$PATH
 
-if [[ "$PIVNET_TOKEN" != "" ]]; then
-  assertPivnetAvailable
-  pivnet login --api-token=$PIVNET_TOKEN
-fi
-
-
 if [[ $# -lt 1 ]]; then
   COMMAND="help"
 else
   COMMAND=$1
 fi
+
+loginToPivnetIfTokenIsAvailable
 
 case "$COMMAND" in
   help)
