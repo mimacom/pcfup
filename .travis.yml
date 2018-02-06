@@ -1,0 +1,7 @@
+language: generic
+
+before_script:
+- chmod +x ./pcfup
+
+script:
+- ./pcfup download-tools
