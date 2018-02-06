@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PCFUP_VERSION=0.0.1
+
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
     echo "[ERR] I’m sorry, `getopt --test` failed in this environment."
@@ -160,7 +162,6 @@ function commandHelp() {
 Usage: pcfup [parameters] <command> [args...]
 
 Parameters:
---version
 -v|--verbose
 -d|--download-folder
 -t|--om-target
@@ -394,5 +395,8 @@ case "$COMMAND" in
   write-config)
     logError "not implemented yet"
     exit 10
+    ;;
+  version)
+    logInfo "pcfup version $PCFUP_VERSION"
     ;;
 esac
