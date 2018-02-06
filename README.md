@@ -1,5 +1,8 @@
 # pcfup
 
+[![Travis](https://img.shields.io/travis/mimacom/pcfup.svg?style=for-the-badge)](https://travis-ci.org/mimacom/pcfup)
+[![GitHub tag](https://img.shields.io/github/tag/mimacom/pcfup.svg?style=for-the-badge)](https://github.com/mimacom/pcfup)
+
 In case your Pivotal Cloud Foundry is not fully automated, an upgrade can be a lot of work.
 Especially if in your production environment Internet is not easily accessible, it is a lot of work to download the products, upload them in the Operations Manager and stage them.
 Afterwards, you will figure out that you need to do the same for the necessary stemcell.
