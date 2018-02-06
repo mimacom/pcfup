@@ -24,7 +24,6 @@ export DOWNLOAD_PATH_JQ="https://github.com/stedolan/jq/releases/download/jq-1.5
 export DOWNLOADS_FOLDER="downloads"
 
 OM_ARGS=
-IAAS=
 export ENABLE_VERBOSE=0
 
 while true; do
@@ -85,16 +84,16 @@ set -eu
 
 function logDebug() {
   if [[ $ENABLE_VERBOSE -eq 1 ]]; then
-    echo "[DEBUG] $@"
+    >&2 echo "[DEBUG] $@"
   fi
 }
 
 function logInfo() {
-  echo "[INFO] $@"
+  >&2 echo "[INFO] $@"
 }
 
 function logError() {
-  echo "[ERR] $@"
+  >&2 echo "[ERR] $@"
 }
 
 ###########################################################
@@ -141,18 +140,6 @@ function execOM() {
   om -t $OM_TARGET --username=$OM_USERNAME --password=$OM_PASSWORD --skip-ssl-validation $@
 }
 
-function loginToPivnetIfTokenIsAvailable() {
-  set +e
-  set +o nounset
-  type pivnet 2>> /dev/null >> /dev/null
-  if [[ $? -eq 0 && "$PIVNET_TOKEN" != "" ]]; then
-    logInfo "login to pivnet"
-    execPivnet login --api-token=$PIVNET_TOKEN
-  fi
-  set -e
-  set -o nounset
-}
-
 ###########################################################
 # command: help
 ###########################################################
@@ -179,6 +166,7 @@ pcfup help
 pcfup product <product> <version>
 pcfup stemcell <stemcell>
 pcfup download-tools
+pcfup pivnet-login <pivnet-auth-token>
 pcfup installed-products
 pcfup available-product-versions
 pcfup export-installation <file>
@@ -189,6 +177,20 @@ pcfup cleanup-om
 pcfup version
 "
 }
+
+
+###########################################################
+# command: pivnet-login
+###########################################################
+
+function commandPivnetLogin() {
+  assertPivnetAvailable
+  assertNumberOfArguments 2 "pcfup pivnet-login <pivnet-auth-token>"
+
+  logInfo "login to pivnet"
+  execPivnet login --api-token=$2
+}
+
 
 ###########################################################
 # command: product
@@ -255,6 +257,7 @@ function ensureStemcellIsAvailable() {
   )
  
   if [[ -z "$stemcell" ]]; then
+    logDebug "need to install $STEMCELL_VERSION / $IAAS"
     downloadStemcell $STEMCELL_VERSION
     SC_FILE_PATH=$(ls -1 $DOWNLOADS_FOLDER/bosh-stemcell*$STEMCELL_VERSION*$IAAS*.tgz | head -1)
    
@@ -265,6 +268,8 @@ function ensureStemcellIsAvailable() {
    
     logInfo "upload $STEMCELL_VERSION to OpsManager"
     execOM upload-stemcell -s $SC_FILE_PATH
+  else
+    logDebug "$STEMCELL_VERSION already installed"
   fi
 }
 
@@ -388,8 +393,6 @@ else
   COMMAND=$1
 fi
 
-loginToPivnetIfTokenIsAvailable
-
 case "$COMMAND" in
   help)
     commandHelp 
@@ -403,6 +406,9 @@ case "$COMMAND" in
     ;;
   download-tools)
     commandDownloadTools $@
+    ;;
+  pivnet-login)
+    commandPivnetLogin $@
     ;;
   installed-products)
     commandInstalledProducts $@
@@ -434,5 +440,9 @@ case "$COMMAND" in
     ;;
   version)
     logInfo "pcfup version $PCFUP_VERSION"
+    ;;
+  *)
+    logError "'$1' is not a valid command"
+    exit 11
     ;;
 esac
