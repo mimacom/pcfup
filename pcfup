@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PCFUP_VERSION=0.0.2
+export PCFUP_VERSION=0.0.3
 
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
@@ -378,6 +378,7 @@ function commandExportInstallation() {
   assertOmSignedIn
   assertNumberOfArguments 2 "pcfup export-installation <filename>"
 
+  mkdir -p $(dirname $2)
   execOM export-installation -o $2
 }
 
