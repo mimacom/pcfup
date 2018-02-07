@@ -214,14 +214,14 @@ function commandProduct() {
   PRODUCT_DOWNLOAD_FOLDER=$DOWNLOADS_FOLDER/$PRODUCT/$VERSION
 
   mkdir -p $PRODUCT_DOWNLOAD_FOLDER
-  if [[ $(ls -1 $PRODUCT_DOWNLOAD_FOLDER/$PRODUCT*.pivotal || echo "1") == "1" ]]; then
+  if [[ $(ls -1 $PRODUCT_DOWNLOAD_FOLDER/*.pivotal || echo "1") == "1" ]]; then
     logInfo "download $PRODUCT ($VERSION) from pivnet..."
     execPivnet download-product-files -p $PRODUCT -r $VERSION -d $PRODUCT_DOWNLOAD_FOLDER --glob=*.pivotal --accept-eula
   else
     logInfo "use cached version from $PRODUCT_DOWNLOAD_FOLDER"
   fi
   
-  PRODUCT_FILE=$(ls -1 $PRODUCT_DOWNLOAD_FOLDER/$PRODUCT*.pivotal | head -1)
+  PRODUCT_FILE=$(ls -1 $PRODUCT_DOWNLOAD_FOLDER/*.pivotal | head -1)
   logDebug "parse $PRODUCT_FILE to determine the necessary stemcell version."
   
   PRODUCT_METADATA=$(mktemp)
