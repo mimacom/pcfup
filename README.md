@@ -23,11 +23,9 @@ For the usage it is required to either use a couple of arguments for authenticat
 export OM_TARGET="https://172.18.147.1/"
 export OM_USERNAME="admin"
 export OM_PASSWORD="secretPassword"
-export PIVNET_TOKEN="yourSecretPivnetToken"
 ```
 
 The credentials of the Operations Manager are the same as you are using for accessing the webinterface.
-The pivnet token you can request in your user profile in the [Pivotal Network](https://network.pivotal.io/)
 
 ## Quick Start
 
@@ -56,13 +54,53 @@ If you don't have internet access, download and install the following products:
 - [PivNet CLI](https://github.com/pivotal-cf/pivnet-cli/)
 - [JQ](https://github.com/stedolan/jq/)
 
+## Login to Pivotal Network
+
+For the login to the pivotal network you need a token from the [Pivotal Network](https://network.pivotal.io/).
+There you can go to the profile and request a token (the deprecated token).
+Afterwards you can use the `pcfup` cli to login:
+
+```bash
+pcfup pivnet-login <pivnet-auth-token>
+```
+
 ## Download and Install a Product
 
-tbd
+If you know the name and the version of a product, you can easily install it with the following command:
 
-`pcfup product <product> <version>`
+```bash
+pcfup product <product> <version>
+```
 
+Otherwise there are two options to figure out the name of the product.
+First of all, you can go to the [PivNet](https://network.pivotal.io/) and select the product there.
+The name of the product is also in the URL.
+You can select the specific versions and just pick one.
+`pcfup` expects the full version, a prefix matching is not implemented yet.
+
+Another possibility is to use `pcfup` to figure out which products are currently installed.
+Therefore you can use the command `pcfup installed-products`.
+
+After figuring out the correct product, you can figure out which versions are available in the PivNet by using the following command:
+
+```bash
+pcfup available-product-versions <product>
+```
+
+### Configuration and Stemcell
+
+During the installation `pcfup` will automatically figure out if there is a new stemcell necessary.
+In that case `pcfup` downloads the stemcell automatically and installs it to your PCF installation.
+
+In case the new product needs configuration, you need to go to the Ops Manager manually.
 
 ## Download and Install a Stemcell
 
-tbd
+In case you upgrade for example the Operations Manager, you might get requested to install several new stemcells.
+For that pcfup has the `stemcell` command. You need to specify the full version of the stemcell there:
+
+```bash
+pcfup stemcell <version>
+```
+
+The stemcell is only downloaded and installed if it is not already installed for your Operations Manager
