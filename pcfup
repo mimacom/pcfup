@@ -126,6 +126,10 @@ function assertJqAvailable() {
   type jq 2>>/dev/null >>/dev/null || (logError "failed to find jq, please use 'pcfup download-tools' or install jq manually." ; exit 10)
 }
 
+function assertIaasAvailable() {
+  test -v IAAS 2>>/dev/null >>/dev/null || (logError "failed to detect IaaS, please set environment variable \$IAAS or specify --iaas." ; exit 10)
+}
+
 function execPivnet() {
   logDebug "execute pivnet $@"
   pivnet $@
@@ -209,6 +213,7 @@ function commandProduct() {
   assertOmAvailable
   assertPivnetSignedIn
   assertOmSignedIn
+  assertIaasAvailable
   assertNumberOfArguments 3 "pcfup product <product> <version>"
 
   PRODUCT=$2
@@ -258,6 +263,7 @@ function commandStemcell() {
   assertOmAvailable
   assertPivnetSignedIn
   assertOmSignedIn
+  assertIaasAvailable
   assertNumberOfArguments 2 "pcfup stemcell <version>"
 
   ensureStemcellIsAvailable $2
