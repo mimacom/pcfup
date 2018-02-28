@@ -227,9 +227,9 @@ function commandProduct() {
   else
     logInfo "use cached version from $PRODUCT_DOWNLOAD_FOLDER"
   fi
-  
-  PRODUCT_FILE=$(ls -1 $PRODUCT_DOWNLOAD_FOLDER/$PRODUCT*.pivotal | head -1)
-  if [[ "$PRODUCT_FILE" != "" ]]; then
+ 
+  PRODUCT_FILE=$(ls -1 $PRODUCT_DOWNLOAD_FOLDER/$PRODUCT*.pivotal 2>> /dev/null | head -1)
+  if [[ "$PRODUCT_FILE" == "" ]]; then
     PRODUCT_FILE=$(ls -1 $PRODUCT_DOWNLOAD_FOLDER/*.pivotal | head -1)
   fi
   logDebug "parse $PRODUCT_FILE to determine the necessary stemcell version."
@@ -237,6 +237,7 @@ function commandProduct() {
   PRODUCT_METADATA=$(mktemp)
   unzip -p $PRODUCT_FILE 'metadata/*' > $PRODUCT_METADATA
   
+  logInfo "meta data file is stored at $PRODUCT_METADATA"
   STEMCELL_VERSION=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["stemcell_criteria"]["version"]')
   PRODUCT_NAME=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["name"]')
   rm $PRODUCT_METADATA
