@@ -179,6 +179,8 @@ Commands:
     Export your Operations Manager installation to a local zip-file, necessary for Operations Manager upgrade.
   pcfup import-installation <file>
     Import your Operations Manager installation to an new Operations Manager.
+  pcfup wait-for-installation
+    Blocks the console until the current running installation is finished. The exit code indicates, whether the installation was successful (=0) or not (!=0).
   pcfup om -- <om-command>
     Execute a 'om' tool command. For using parameters from the om tool, the '--' is necessary to avoid handling by pcfup.
 * pcfup outdated
@@ -423,6 +425,39 @@ function commandOM() {
 
 
 ###########################################################
+# command: wait-for-installation
+###########################################################
+
+function commandWaitForInstallation() {
+   assertOmAvailable
+   assertOmSignedIn
+  assertNumberOfArguments 1 "pcfup wait-for-installation"
+
+   INSTALLATION_ID=$(execOM curl -p /api/v0/installations 2>> /dev/null | jq .installations[0].id)
+
+   logInfo "waiting for status of installation $INSTALLATION_ID"
+   
+   while true; do
+     STATUS=$(execOM curl -p /api/v0/installations/$INSTALLATION_ID 2>> /dev/null |jq .status)
+
+     logDebug "current status of installation is $STATUS"
+
+     if [[ "$STATUS" != '"running"' ]]; then
+       logInfo "upgrade is no longer running, exit application."
+
+       if [[ "$STATUS" == '"succeeded"' ]]; then
+         exit 0
+       else
+         exit 100
+       fi
+     fi
+
+     sleep 1m;
+   done
+}
+
+
+###########################################################
 # parsing command parameters and arguments
 ###########################################################
 
@@ -476,6 +511,9 @@ case "$COMMAND" in
     ;;
   om)
     commandOM $@
+    ;;
+  wait-for-installation)
+    commandWaitForInstallation $@
     ;;
   version)
     logInfo "pcfup version $PCFUP_VERSION"
