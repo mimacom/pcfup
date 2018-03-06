@@ -140,6 +140,15 @@ function execOM() {
   om -t $OM_TARGET --username=$OM_USERNAME --password=$OM_PASSWORD --skip-ssl-validation $@
 }
 
+function extractCredential() {
+    logDebug "extract credential $@"
+    RESPONSE=$(execOM curl -p $1)
+    IDENTITY=$(echo ${RESPONSE} | jq -r ".credential.value.identity")
+    PASSWORD=$(echo ${RESPONSE} | jq -r ".credential.value.password")
+    RETURN=(${IDENTITY} ${PASSWORD})
+    return ${RETURN}
+}
+
 ###########################################################
 # command: help
 ###########################################################
@@ -458,6 +467,64 @@ function commandWaitForInstallation() {
 
 
 ###########################################################
+# command: credentials
+###########################################################
+
+function commandCredentials() {
+  assertOmAvailable
+  assertOmSignedIn
+  assertNumberOfArguments 1 "pcfup credentials"
+
+  # BOSH Director credentials
+  if [ -z ${PCFUP_DIRECTOR_USER} ]; then
+    DIRECTOR=$(extractCredential "/api/v0/deployed/director/credentials/director_credentials")
+    export PCFUP_DIRECTOR_USER=$DIRECTOR[1]
+    export PCFUP_DIRECTOR_PASSWORD=$DIRECTOR[2]
+  fi
+
+  # BOSH DIRECTOR VM
+  if [ -z ${PCFUP_BOSH_VM_USER} ]; then
+    BOSH_VM=$(extractCredential "/api/v0/deployed/director/credentials/vm_credentials")
+    export PCFUP_BOSH_VM_USER=$BOSH_VM[1]
+    export PCFUP_BOSH_VM_PASSWORD=$BOSH_VM[2]
+  fi
+
+  # UAA Admin
+  export PCFUP_BOSH_UAA_ADMIN_ID="opsman"
+  export PCFUP_BOSH_UAA_ADMIN_SECRET=""
+
+  CF_GUID=$(execOM curl -p "/api/v0/deployed/products" | jq -r ".[] | .guid" | grep cf)
+  logDebug "CF deployment GUID: ${CF_GUID}"
+
+  # CF Admin User
+  if [ -z PCFUP_CF_ADMIN_USER ]; then
+    CF_ADMIN=$(extractCredential "/api/v0/deployed/products/${CF_GUID}/credentials/.uaa.admin_credentials")
+    export PCFUP_CF_ADMIN_USER=${CF_ADMIN}[1]
+    export PCFUP_CF_ADMIN_PASSWORD=${CF_ADMIN}[2]
+  fi
+
+  # CF Admin Client
+  if [ -z PCFUP_CF_ADMIN_CLIENT_ID ]; then
+    CF_ADMIN_CLIENT=$(extractCredential "/api/v0/deployed/products/${CF_GUID}/credentials/.uaa.admin_client_credentials")
+    export PCFUP_CF_ADMIN_CLIENT_ID=${CF_ADMIN_CLIENT}[1]
+    export PCFUP_CF_ADMIN_CLIENT_SECRET=${CF_ADMIN_CLIENT}[2]
+  fi
+}
+
+
+
+###########################################################
+# command: login-tools
+###########################################################
+
+function commandLoginTools() {
+
+  # UAA Admin
+  token owner get $PCFUP_BOSH_UAA_ADMIN_ID $OM_USERNAME -s $PCFUP_BOSH_UAA_ADMIN_SECRET -p $OM_PASSWORD
+}
+
+
+###########################################################
 # parsing command parameters and arguments
 ###########################################################
 
@@ -514,6 +581,9 @@ case "$COMMAND" in
     ;;
   wait-for-installation)
     commandWaitForInstallation $@
+    ;;
+  credentials)
+    commandCredentials $@
     ;;
   version)
     logInfo "pcfup version $PCFUP_VERSION"
