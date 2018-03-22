@@ -454,14 +454,14 @@ function commandWaitForInstallation() {
    logInfo "waiting for status of installation $INSTALLATION_ID"
    
    while true; do
-     STATUS=$(execOM curl -p /api/v0/installations/$INSTALLATION_ID 2>> /dev/null |jq .status)
+     STATUS=$(execOM curl -p /api/v0/installations/$INSTALLATION_ID 2>> /dev/null |jq -j .status)
 
-     logDebug "current status of installation is $STATUS"
+     logDebug "current status of installation is '$STATUS'"
 
-     if [[ "$STATUS" != '"running"' ]]; then
+     if [ "$STATUS" != 'running' ]; then
        logInfo "upgrade is no longer running, exit application."
 
-       if [[ "$STATUS" == '"succeeded"' ]]; then
+       if [ "$STATUS" == 'succeeded' ]; then
          exit 0
        else
          exit 100
