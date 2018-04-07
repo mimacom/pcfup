@@ -4,7 +4,7 @@ set -e
 ARCHIVE=$(mktemp)
 DESTINATION_FILENAME=pcfup-bundle
 
-tar -czf $ARCHIVE asserts/ commands/ pcfup
+tar -czf $ARCHIVE asserts/ commands/ methods/ pcfup
 
 > $DESTINATION_FILENAME
 
