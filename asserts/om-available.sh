@@ -1,7 +1,9 @@
 #!/bin/bash
 
 function assertOmAvailable() {
-  type om 2>>/dev/null >>/dev/null || (logError "failed to find om, please use 'pcfup download-tools' or install om manually." ; exit 10)
+  type om 2>>/dev/null >>/dev/null \
+    || type om-linux 2>>/dev/null >>/dev/null \
+    || (logError "failed to find om, please use 'pcfup download-tools' or install om manually." ; exit 10)
 
   if [ -z ${OM_TARGET+x} ]; then
     logError "Please set OM_TARGET"
