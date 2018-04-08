@@ -10,6 +10,7 @@ function getProductInfo() {
   logDebug "meta data file is stored at $PRODUCT_METADATA"
   STEMCELL_VERSION=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["stemcell_criteria"]["version"]')
   PRODUCT_NAME=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["name"]')
+  PRODUCT_VERSION=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["product_version"]')
   rm $PRODUCT_METADATA
   logDebug "detected $STEMCELL_VERSION in product, ensure that this version is available."
 }
