@@ -29,19 +29,33 @@ The credentials of the Operations Manager are the same as you are using for acce
 
 ## Quick Start
 
-For start using pivnet, you only need to download the bash script `pcfup` and make it executable.
+For start using pivnet, you need to download this repository and execute the bash script `pcfup`.
 Afterwards you can use `pcfup` to download all required tools or do it manually like described below.
+Another option is to download the repository and execute `create-bundled-pcfup.sh`.
+The result will be the script `pcfup-bundle` which includes everything what you need. 
+It is recommended to move the `pcfup-bundle` to your bin folder and call it `pcfup`.
 
-### Download
+### Installation
 
-You can either download it manually or use wget as described below:
+For the setup there is a small preparation script which is combining this repository to an executable.
+Aftewards you can move the executable to a location in your PATH and run it.
+A sample how it can look like is the following:
 
 ```bash
-wget -Opcfup https://raw.githubusercontent.com/mimacom/pcfup/master/pcfup
-chmod +x pcfup
-```
+# download this repository to a local folder
+git clone https://github.com/mimacom/pcfup.git
 
-Afterwards, just move pcfup to your path or call it with `./pcfup`.
+# create the bundle
+cd pcfup
+./create-bundled-pcfup.sh
+
+# copy the bundle to a location in the PATH and make it executable 
+mv pcfup-bundle /usr/local/bin/pcfup
+chmod +x /usr/local/bin/pcfup
+
+# run pcfup help
+pcfup help
+```
 
 ### Install Required Tools
 
@@ -104,3 +118,8 @@ pcfup stemcell <version>
 ```
 
 The stemcell is only downloaded and installed if it is not already installed for your Operations Manager
+
+## Further Commands
+
+Execute `pcfup help` to see information about all commands.
+Alternatively, you can have a look to the [commands](commands) folder inside this repository.
