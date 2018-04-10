@@ -14,6 +14,7 @@
 . $PCFUP_DIR/methods/exec-om.sh
 . $PCFUP_DIR/methods/exec-pivnet.sh
 . $PCFUP_DIR/methods/ensure-stemcell-is-available.sh
+. $PCFUP_DIR/methods/get-product-info.sh
 
 assertPivnetAvailable
 assertOmAvailable
@@ -40,14 +41,7 @@ if [[ "$PRODUCT_FILE" == "" ]]; then
 fi
 logDebug "parse $PRODUCT_FILE to determine the necessary stemcell version."
 
-PRODUCT_METADATA=$(mktemp)
-unzip -p $PRODUCT_FILE 'metadata/*' > $PRODUCT_METADATA
-
-logInfo "meta data file is stored at $PRODUCT_METADATA"
-STEMCELL_VERSION=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["stemcell_criteria"]["version"]')
-PRODUCT_NAME=$(ruby -ryaml -e 'puts YAML.load(File.new("'$PRODUCT_METADATA'", "r"))["name"]')
-rm $PRODUCT_METADATA
-logInfo "detected $STEMCELL_VERSION in product, ensure that this version is available."
+getProductInfo $PRODUCT_FILE
 
 if [ -n "$STEMCELL_VERSION" ]; then
   ensureStemcellIsAvailable $STEMCELL_VERSION

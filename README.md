@@ -35,6 +35,12 @@ Another option is to download the repository and execute `create-bundled-pcfup.s
 The result will be the script `pcfup-bundle` which includes everything what you need. 
 It is recommended to move the `pcfup-bundle` to your bin folder and call it `pcfup`.
 
+### Dependencies
+
+The following software should be installed to use `pcfup`:
+
+* ruby
+
 ### Installation
 
 For the setup there is a small preparation script which is combining this repository to an executable.
