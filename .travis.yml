@@ -2,6 +2,24 @@ language: generic
 
 before_script:
 - chmod +x ./pcfup
+- chmod +x ./create-bundled-pcfup.sh
 
 script:
-- ./pcfup download-tools
+# build
+- ./create-bundled-pcfup.sh
+- chmod +x ./pcfup-bundle
+# test
+- ./pcfup-bundle
+- ./pcfup-bundle version
+- ./pcfup-bundle download-tools
+
+deploy:
+  provider: releases
+  file: pcfup-bundle
+  skip_cleanup: true
+  api_key:
+      secure: XcFwyC1ygdqp/wnaKvYFZ3PFy93Ax+PkvYhqm6plA5I581SyqJ2BYtIA1BRrRYZUwhEhDr9Fsh9NyrG9A6VTVt6K7OI3H46/Dol1krEB5fWzQ5k1TLUyLbbOSJD/w0lc67w1BkMG3flqSSHmzSSFy71uJ3eJTE8VOXA+bUr0tIkg70DtQrL39GpVekZUi+U3zXVY4ehZLSi7VcTthLTHDXr4MgmsUM1GReQrNQBTqNLW1KYjvMew30Mz93lWHDCcrUhPQRbH8SApRVzNiHhTv1i9GVdstVXRA516wMWfiM11SFwQmZKYKWYUtoX3abTOJ73/pBQVBC/GqSGWhswH16e7G0+lbeoT+FvAHx1XRG3JNklBlgb0K91/toQonWBrJfK6ZPHuxIePD2ZVcwTKfxUSX+68R07mre/YIwiq7S25nRx7d1YWykZ4tRzXpNim/Yuo1pq/JmcPTTekVROiqbH3FuLFOnKscPPiry0dZ33wypkeHs4exEMS4Y9/34oK6SS03SBdrDiEemnfWvQ09YD2mVNH6WJANgXcQzUY4DeYUgXikpv3rapHfXfJtw6tKYMoC0nMxnSaJcnJoJWtedU0h5tu6vE3Eu0OaeL/Du49UV4J0pVnVF+5FCEio4JgrMjTeSAxmS/vdC1C1bml23FKh6uaYSBjcgRYzCFoRuY=
+    file:
+      - "pcfup-bundle"
+  on:
+    tags: true
