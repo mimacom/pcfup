@@ -59,8 +59,8 @@ while true; do
       shift 2
       ;;
     -k|--skip-ssl-validation)
-      OM_ARGS="$OM_ARGS -k"
-      shift 2
+      OM_ARGS="$OM_ARGS --skip-ssl-validation "
+      shift 1
       ;;
     --iaas)
       IAAS="$2"
