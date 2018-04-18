@@ -11,20 +11,7 @@ Parameters: $OPTIONS_HELP
 
 Commands:"
 
-for command in $(ls -1 $PCFUP_DIR/commands/*); do
-  COMMAND_USAGE=$(cat $command | grep "^# Usage:" | cut -d' ' -f3-)
-  if [ -n "$COMMAND_USAGE" ]; then
-    echo "  $COMMAND_USAGE"
-
-    COMMAND_DESCRIPTION=$(cat $command | grep "^# Description:" | cut -d' ' -f3-)
-    if [ -n "$COMMAND_DESCRIPTION" ]; then
-      echo "    $COMMAND_DESCRIPTION"
-    fi
-  fi
-
-
-done
+cat $PCFUP_DIR/commands/*.sh | grep -E "^# (Usage|Description):" | sed "s/# Usage:/ /" | sed "s/# Description:/   /"
 
 echo "
-
 * not implemented yet"
