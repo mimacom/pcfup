@@ -4,7 +4,6 @@
 # Description: Download a product from Pivotal Network, including the necessary stemcell.
 
 . $PCFUP_DIR/asserts/pivnet-available.sh
-. $PCFUP_DIR/asserts/om-available.sh
 . $PCFUP_DIR/asserts/pivnet-signed-in.sh
 . $PCFUP_DIR/asserts/om-signed-in.sh
 . $PCFUP_DIR/asserts/iaas-available.sh
@@ -18,7 +17,6 @@
 . $PCFUP_DIR/methods/get-product-info.sh
 
 assertPivnetAvailable
-assertOmAvailable
 assertPivnetSignedIn
 assertIaasAvailable
 assertNumberOfArguments 3 "pcfup download-product <product> <version>"

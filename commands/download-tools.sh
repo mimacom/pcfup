@@ -3,8 +3,8 @@
 # Usage: pcfup download-tools
 # Description: Download tools which are necessary to run this application.
 
-export DOWNLOAD_PATH_OM="https://github.com/pivotal-cf/om/releases/download/0.29.0/om-linux"
-export DOWNLOAD_PATH_PIVNET="https://github.com/pivotal-cf/pivnet-cli/releases/download/v0.0.49/pivnet-linux-amd64-0.0.49"
+export DOWNLOAD_PATH_OM="https://github.com/pivotal-cf/om/releases/download/0.44.0/om-linux"
+export DOWNLOAD_PATH_PIVNET="https://github.com/pivotal-cf/pivnet-cli/releases/download/v0.0.55/pivnet-linux-amd64-0.0.55"
 export DOWNLOAD_PATH_JQ="https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64"
 
 . $PCFUP_DIR/methods/log.sh

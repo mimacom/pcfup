@@ -13,6 +13,12 @@ assertOmAvailable
 assertOmSignedIn
 assertNumberOfArguments 2 "pcfup import-installation <filename>"
 
+INSTALLATION_ZIP=$2
+if [ ! -f $INSTALLATION_ZIP ]; then
+    echo "installation.zip to import could not be found in '${INSTALLATION_ZIP}'"
+    exit 1
+fi
+
 echo -n "Decryption passphrase (visible): "
 read DECRYPTION_PASSPHRASE
-execOM import-installation -i $2 -dp $DECRYPTION_PASSPHRASE
+execOM --decryption-passphrase $DECRYPTION_PASSPHRASE import-installation -i $INSTALLATION_ZIP
