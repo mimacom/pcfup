@@ -12,4 +12,5 @@ assertNumberOfArguments 2 "pcfup pivotal-file-info <product.pivotal>"
 getProductInfo $2
 echo "product: $PRODUCT_NAME"
 echo "version: $PRODUCT_VERSION"
-echo "stemcell: $STEMCELL_VERSION"
+echo "stemcell-version: $STEMCELL_VERSION"
+echo "stemcell-os: $STEMCELL_OS"
