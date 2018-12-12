@@ -5,14 +5,15 @@
 
 function isStemcellUploaded() {
   STEMCELL_VERSION=$1
+  STEMCELL_TYPE=$2
+
   STEMCELL_VERSION_PREFIX=$(echo $1 | awk -F. '{print $1}')
   STEMCELL_VERSION_SUFFIX=$(echo $1 | awk -F. '{print $2}')
-
   if [[ -z $STEMCELL_VERSION_SUFFIX ]]; then
     STEMCELL_VERSION_SUFFIX=0
   fi
 
-  logDebug "search for stemcell $STEMCELL_VERSION with prefix $STEMCELL_VERSION_PREFIX"
+  logDebug "search for stemcell of type $STEMCELL_TYPE in version $STEMCELL_VERSION with prefix $STEMCELL_VERSION_PREFIX"
 
   diagnostic_report=$(
     execOM curl --silent --path "/api/v0/diagnostic_report"
@@ -24,7 +25,8 @@ function isStemcellUploaded() {
       -r \
       --arg version "$STEMCELL_VERSION_PREFIX" \
       --arg glob "$IAAS" \
-    '.stemcells[] | select(contains($version) and contains($glob))' |
+      --arg type "$STEMCELL_TYPE" \
+    '.stemcells[] | select(contains($version) and contains($glob) and contains($type))' |
     sort -n -r |
     head -1
   )
